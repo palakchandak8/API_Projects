@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cool Weather Widget</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body, html {
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-image 1s ease-in-out;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: inherit;
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      z-index: -1;
+    }
+
+    .weather-widget {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .weather-icon img {
+      width: 80px;
+      height: 80px;
+    }
+
+    .search-group {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .search-group input {
+      border-radius: 10px 0 0 10px;
+      border: none;
+      padding: 10px 12px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+      font-size: 14px;
+    }
+
+    .search-group input::placeholder {
+      color: #666;
+    }
+
+    .search-group button {
+      border-radius: 0 10px 10px 0;
+      border: none;
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .search-group button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .time-box {
+      margin: 20px 0;
+      font-size: 18px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    small {
+      color: #e0e0e0;
+    }
+
+    h4 {
+      margin-bottom: 25px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    #temperature {
+      font-size: 2.5rem;
+      font-weight: 300;
+      margin: 15px 0;
+    }
+
+    #conditionText {
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      opacity: 0.9;
+    }
+
+    #cityName {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="weather-widget">
+    <h4>WEATHER WIDGET</h4>
+
+    <div class="search-group mb-3">
+      <input type="text" id="locationInput" placeholder="Enter location">
+      <button onclick="fetchWeather()">🔍</button>
+    </div>
+
+    <div id="weatherInfo" class="d-none">
+      <h5 id="cityName"></h5>
+      <div class="weather-icon">
+        <img id="icon" src="" alt="icon">
+      </div>
+      <h2 id="temperature"></h2>
+      <p id="conditionText"></p>
+
+      <div class="time-box">
+        <span id="time"></span><br>
+        <small id="date"></small>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const input = document.getElementById("locationInput");
+
+  input.addEventListener("keypress", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      fetchWeather();
+    }
+  });
+
+  function setBackground(condition) {
+    const c = condition.toLowerCase();
+    let url = "";
+
+    if (c.includes("rain") || c.includes("drizzle") || c.includes("shower")) {
+      url = "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80";
+    } else if (c.includes("snow") || c.includes("blizzard") || c.includes("sleet")) {
+      url = "https://images.unsplash.com/photo-1547036967-23d11aacaee0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80";
+    } else if (c.includes("sun") || c.includes("clear") || c.includes("sunny")) {
+      url = "https://images.unsplash.com/photo-1601297183305-6df142704ea2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80";
+    } else if (c.includes("cloud") || c.includes("overcast") || c.includes("partly")) {
+      url = "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80";
+    } else if (c.includes("mist") || c.includes("fog") || c.includes("haze")) {
+      url = "https://images.unsplash.com/photo-1487621167305-5d248087c724?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80";
+    } else if (c.includes("thunder") || c.includes("storm")) {
+      url = "https://images.unsplash.com/photo-1605727216801-e27ce1d0cc28?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80";
+    } else if (c.includes("wind")) {
+      url = "https://images.unsplash.com/photo-1500740516770-92bd004b996e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80";
+    } else {
+      // Default cloudy sky
+      url = "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80";
+    }
+
+    document.body.style.backgroundImage = `url('${url}')`;
+  }
+
+  function fetchWeather() {
+    const location = input.value.trim();
+    if (!location) {
+      alert("Please enter a location.");
+      return;
+    }
+
+    const apiUrl = `https://api.weatherapi.com/v1/current.json?key=8d00b9415f7f4c0db0f64917251306&q=${location}&aqi=yes`;
+
+    fetch(apiUrl)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("weatherInfo").classList.remove("d-none");
+        document.getElementById("cityName").innerText = data.location.name + ", " + data.location.country;
+        document.getElementById("temperature").innerText = `${data.current.temp_c}°C`;
+        document.getElementById("conditionText").innerText = data.current.condition.text;
+        document.getElementById("icon").src = "https:" + data.current.condition.icon;
+
+        const localTime = new Date(data.location.localtime);
+        document.getElementById("time").innerText = localTime.toLocaleTimeString();
+        document.getElementById("date").innerText = localTime.toDateString();
+
+        setBackground(data.current.condition.text); // Dynamic background based on weather
+      })
+      .catch(err => {
+        alert("Weather data could not be loaded. Try a valid location.");
+        console.error(err);
+      });
+  }
+</script>
+
+</body>
+</html>

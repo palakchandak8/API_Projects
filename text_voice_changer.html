@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice ⇄ Text Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #4c63d2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 3em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 20px 30px;
+            border: 3px solid #e0e0e0;
+            border-radius: 20px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            font-weight: 600;
+            color: #495057;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mode-btn:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+            transform: translateY(-2px);
+        }
+
+        .mode-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .mode-icon {
+            font-size: 2em;
+        }
+
+        .converter-section {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .converter-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .converter-section:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .recording {
+            animation: pulse 1.5s infinite;
+            background: #dc3545 !important;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .voice-settings {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .setting-group label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        select, input[type="range"] {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        select:focus, input[type="range"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .language-selector {
+            margin-bottom: 20px;
+        }
+
+
+.back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #4c63d2;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.back-btn:hover {
+    background: #3b52c1;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 25px 20px;
+    }
+
+    h1 {
+        font-size: 2.2em;
+    }
+
+    .mode-selector {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .mode-btn {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .voice-settings {
+        flex-direction: column;
+    }
+}
+
+        
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <button id="backBtn" class="back-btn" style="display: none;" onclick="showModeSelector()">← Back</button>
+
+        
+        <h1>🎤 Voice ⇄ Text Converter</h1>
+        
+        <!-- Mode Selector -->
+        <div id="modeSelector" class="mode-selector">
+            <div class="mode-btn" onclick="selectMode('speechToText')">
+                <div class="mode-icon">🎙️</div>
+                <div>Speech to Text</div>
+                <small>Convert your voice to text</small>
+            </div>
+            <div class="mode-btn" onclick="selectMode('textToSpeech')">
+                <div class="mode-icon">🔊</div>
+                <div>Text to Speech</div>
+                <small>Convert text to voice</small>
+            </div>
+        </div>
+        
+        <!-- Speech to Text Section -->
+        <div id="speechToTextSection" class="converter-section">
+            <div class="section-title">
+                <span class="icon">🎙️</span>
+                Speech to Text
+            </div>
+            
+            <div class="language-selector">
+                <select id="speechLang">
+                    <option value="en-US">English (US)</option>
+                    <option value="en-GB">English (UK)</option>
+                    <option value="hi-IN">Hindi</option>
+                    <option value="es-ES">Spanish</option>
+                    <option value="fr-FR">French</option>
+                    <option value="de-DE">German</option>
+                    <option value="ja-JP">Japanese</option>
+                    <option value="ko-KR">Korean</option>
+                    <option value="zh-CN">Chinese (Mandarin)</option>
+                </select>
+            </div>
+            
+            <textarea id="speechOutput" placeholder="Your speech will appear here..." readonly></textarea>
+            
+            <div class="controls">
+                <button id="startRecord" class="btn btn-primary">
+                    <span>🎤</span> Start Recording
+                </button>
+                <button id="stopRecord" class="btn btn-danger" disabled>
+                    <span>⏹️</span> Stop Recording
+                </button>
+                <button id="clearSpeech" class="btn btn-secondary">
+                    <span>🗑️</span> Clear
+                </button>
+            </div>
+            
+            <div id="speechStatus" class="status"></div>
+        </div>
+
+        <!-- Text to Speech Section -->
+        <div id="textToSpeechSection" class="converter-section">
+            <div class="section-title">
+                <span class="icon">🔊</span>
+                Text to Speech
+            </div>
+            
+            <textarea id="textInput" placeholder="Type or paste your text here..."></textarea>
+            
+            <div class="voice-settings">
+                <div class="setting-group">
+                    <label>Speed</label>
+                    <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1">
+                    <span id="rateValue">1.0x</span>
+                </div>
+                <div class="setting-group">
+                    <label>Pitch</label>
+                    <input type="range" id="pitchSlider" min="0" max="2" step="0.1" value="1">
+                    <span id="pitchValue">1.0</span>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="playText" class="btn btn-primary">
+                    <span>▶️</span> Play
+                </button>
+                <button id="pauseText" class="btn btn-secondary" disabled>
+                    <span>⏸️</span> Pause
+                </button>
+                <button id="stopText" class="btn btn-danger" disabled>
+                    <span>⏹️</span> Stop
+                </button>
+                <button id="clearText" class="btn btn-secondary">
+                    <span>🗑️</span> Clear
+                </button>
+            </div>
+            
+            <div id="textStatus" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isRecording = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+        }
+
+        // Speech Synthesis Setup
+        let speechSynthesis = window.speechSynthesis;
+        let currentUtterance = null;
+
+        // DOM Elements
+        const modeSelector = document.getElementById('modeSelector');
+        const speechToTextSection = document.getElementById('speechToTextSection');
+        const textToSpeechSection = document.getElementById('textToSpeechSection');
+        const backBtn = document.getElementById('backBtn');
+
+        // Speech to Text Elements
+        const startRecordBtn = document.getElementById('startRecord');
+        const stopRecordBtn = document.getElementById('stopRecord');
+        const clearSpeechBtn = document.getElementById('clearSpeech');
+        const speechOutput = document.getElementById('speechOutput');
+        const speechStatus = document.getElementById('speechStatus');
+        const speechLang = document.getElementById('speechLang');
+
+        // Text to Speech Elements
+        const textInput = document.getElementById('textInput');
+        const playTextBtn = document.getElementById('playText');
+        const pauseTextBtn = document.getElementById('pauseText');
+        const stopTextBtn = document.getElementById('stopText');
+        const clearTextBtn = document.getElementById('clearText');
+        const textStatus = document.getElementById('textStatus');
+        const rateSlider = document.getElementById('rateSlider');
+        const pitchSlider = document.getElementById('pitchSlider');
+        const rateValue = document.getElementById('rateValue');
+        const pitchValue = document.getElementById('pitchValue');
+
+        // Initialize
+        function init() {
+            setupEventListeners();
+            
+            if (!SpeechRecognition) {
+                console.log('Speech recognition not supported');
+            }
+        }
+
+        // Mode Selection
+        function selectMode(mode) {
+            modeSelector.style.display = 'none';
+            backBtn.style.display = 'block';
+            
+            if (mode === 'speechToText') {
+                speechToTextSection.classList.add('active');
+                if (!SpeechRecognition) {
+                    showStatus('speechStatus', 'Speech recognition not supported in this browser', 'error');
+                    startRecordBtn.disabled = true;
+                }
+            } else if (mode === 'textToSpeech') {
+                textToSpeechSection.classList.add('active');
+            }
+        }
+
+        function showModeSelector() {
+            modeSelector.style.display = 'flex';
+            backBtn.style.display = 'none';
+            speechToTextSection.classList.remove('active');
+            textToSpeechSection.classList.remove('active');
+            
+            // Reset states
+            if (recognition && isRecording) {
+                recognition.stop();
+                resetRecordingState();
+            }
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                updateTextButtons(false, true, true);
+            }
+            
+            // Clear status messages
+            hideStatus('speechStatus');
+            hideStatus('textStatus');
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Speech to Text
+            startRecordBtn.addEventListener('click', startRecording);
+            stopRecordBtn.addEventListener('click', stopRecording);
+            clearSpeechBtn.addEventListener('click', clearSpeechOutput);
+
+            // Text to Speech
+            playTextBtn.addEventListener('click', playText);
+            pauseTextBtn.addEventListener('click', pauseText);
+            stopTextBtn.addEventListener('click', stopText);
+            clearTextBtn.addEventListener('click', clearTextInput);
+
+            // Voice settings
+            rateSlider.addEventListener('input', updateRateValue);
+            pitchSlider.addEventListener('input', updatePitchValue);
+        }
+
+        // Speech to Text Functions
+        function startRecording() {
+            if (!recognition) return;
+
+            recognition.lang = speechLang.value;
+            recognition.start();
+            isRecording = true;
+
+            startRecordBtn.disabled = true;
+            stopRecordBtn.disabled = false;
+            startRecordBtn.classList.add('recording');
+
+            showStatus('speechStatus', 'Listening... Speak now!', 'info');
+
+            recognition.onresult = function(event) {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                speechOutput.value = transcript;
+            };
+
+            recognition.onerror = function(event) {
+                showStatus('speechStatus', `Error: ${event.error}`, 'error');
+                resetRecordingState();
+            };
+
+            recognition.onend = function() {
+                if (isRecording) {
+                    showStatus('speechStatus', 'Speech recognition completed', 'success');
+                }
+                resetRecordingState();
+            };
+        }
+
+        function stopRecording() {
+            if (recognition && isRecording) {
+                recognition.stop();
+                isRecording = false;
+                showStatus('speechStatus', 'Recording stopped', 'success');
+            }
+            resetRecordingState();
+        }
+
+        function resetRecordingState() {
+            startRecordBtn.disabled = false;
+            stopRecordBtn.disabled = true;
+            startRecordBtn.classList.remove('recording');
+            isRecording = false;
+        }
+
+        function clearSpeechOutput() {
+            speechOutput.value = '';
+            hideStatus('speechStatus');
+        }
+
+        // Text to Speech Functions
+        function playText() {
+            const text = textInput.value.trim();
+            if (!text) {
+                showStatus('textStatus', 'Please enter some text to convert to speech', 'error');
+                return;
+            }
+
+            if (speechSynthesis.speaking) {
+                speechSynthesis.resume();
+                updateTextButtons(false, true, true);
+                showStatus('textStatus', 'Resuming speech...', 'info');
+                return;
+            }
+
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            
+            // Set rate and pitch
+            currentUtterance.rate = parseFloat(rateSlider.value);
+            currentUtterance.pitch = parseFloat(pitchSlider.value);
+
+            currentUtterance.onstart = function() {
+                updateTextButtons(false, false, false);
+                showStatus('textStatus', 'Speaking...', 'info');
+            };
+
+            currentUtterance.onend = function() {
+                updateTextButtons(false, true, true);
+                showStatus('textStatus', 'Speech completed', 'success');
+            };
+
+            currentUtterance.onerror = function(event) {
+                showStatus('textStatus', `Error: ${event.error}`, 'error');
+                updateTextButtons(false, true, true);
+            };
+
+            speechSynthesis.speak(currentUtterance);
+            updateTextButtons(false, false, false);
+        }
+
+        function pauseText() {
+            if (speechSynthesis.speaking && !speechSynthesis.paused) {
+                speechSynthesis.pause();
+                updateTextButtons(false, true, true);
+                showStatus('textStatus', 'Speech paused', 'info');
+            }
+        }
+
+        function stopText() {
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                updateTextButtons(false, true, true);
+                hideStatus('textStatus');
+            }
+        }
+
+        function clearTextInput() {
+            textInput.value = '';
+            hideStatus('textStatus');
+        }
+
+        function updateTextButtons(play, pause, stop) {
+            playTextBtn.disabled = play;
+            pauseTextBtn.disabled = pause;
+            stopTextBtn.disabled = stop;
+        }
+
+        // Utility Functions
+        function updateRateValue() {
+            rateValue.textContent = rateSlider.value + 'x';
+        }
+
+        function updatePitchValue() {
+            pitchValue.textContent = pitchSlider.value;
+        }
+
+        function showStatus(elementId, message, type) {
+            const statusElement = document.getElementById(elementId);
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+            statusElement.style.display = 'block';
+        }
+
+        function hideStatus(elementId) {
+            const statusElement = document.getElementById(elementId);
+            statusElement.style.display = 'none';
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
